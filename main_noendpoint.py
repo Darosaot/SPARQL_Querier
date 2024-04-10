@@ -1,7 +1,9 @@
 import streamlit as st
 from SPARQLWrapper import SPARQLWrapper, JSON
 import pandas as pd
-import plotly.express as px
+# Use the following imports for data visualization and export
+from data_visualization import visualize_data, export_to_csv
+
 
 # Default credentials
 DEFAULT_USER = "ppds"
@@ -144,19 +146,10 @@ if st.session_state['logged_in']:
     # Visualization selection and rendering if query results exist
     if 'query_results' in st.session_state and st.session_state['query_results'] is not None:
         selected_viz = st.selectbox("Select visualization type:", viz_options)
-        df = pd.DataFrame(st.session_state['query_results'], columns=st.session_state['columns'])
+        
+        # Replace direct DataFrame creation and Plotly visualization with a call to visualize_data
+        visualize_data(st.session_state['query_results'], st.session_state['columns'], selected_viz)
 
-        if selected_viz == "Table":
-            st.table(df)
-        elif selected_viz == "Line Chart":
-            st.line_chart(df)
-        elif selected_viz == "Bar Chart":
-            st.bar_chart(df)
-        elif selected_viz == "Pie Chart" and len(df.columns) >= 2:
-            fig = px.pie(df, names=df.columns[0], values=df.columns[1])
-            st.plotly_chart(fig)
-        else:
-            st.warning("Selected visualization type is not supported for the current data.")
-
-        # Export to CSV button
+        # Replace the CSV export functionality with a call to export_to_csv from data_visualization.py
         export_to_csv(st.session_state['query_results'], st.session_state['columns'])
+
