@@ -86,22 +86,18 @@ WHERE {
 }
 
 # User login form
-with st.sidebar:
-    st.title("Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    login_button = st.button("Login")
+# with st.sidebar:
+#     st.title("Login")
+#     username = st.text_input("Username")
+#     password = st.text_input("Password", type="password")
+#     login_button = st.button("Login")
 
 # Attempt login on button click
-if login_button:
-    st.session_state['logged_in'] = check_login(username, password)
+# if login_button:
+#     st.session_state['logged_in'] = check_login(username, password)
 
-# Function to export data to CSV
-def export_to_csv(data, columns):
-    if data and columns:
-        df = pd.DataFrame(data, columns=columns)
-        csv = df.to_csv(index=False)
-        st.download_button(label="Download CSV", data=csv, file_name="query_results.csv", mime='text/csv')
+# Assume logged in for the purpose of this temporary adaptation
+st.session_state['logged_in'] = True
 
 # Visualization options
 viz_options = ["Table", "Line Chart", "Bar Chart", "Pie Chart"]
