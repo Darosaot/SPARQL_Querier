@@ -2,9 +2,11 @@ import streamlit as st
 from SPARQLWrapper import SPARQLWrapper, JSON
 import pandas as pd
 # Use the following imports for data visualization and export
-from data_visualization import visualize_data, export_to_csv
+from data_visualization import visualize_data
 from query_executor import execute_query  # Import the execute_query function
 from query_templates import query_templates
+from results_export import export_to_csv, export_to_json, export_to_excel
+import xlsxwriter
 
 # Default credentials
 DEFAULT_USER = "ppds"
@@ -88,7 +90,14 @@ if st.session_state['logged_in']:
         # - Chart customization options
         # Therefore, you just call it with the data, columns, and selected viz type.
         visualize_data(st.session_state['query_results'], st.session_state['columns'], selected_viz)
+        # Export options
+        export_format = st.selectbox("Select export format:", ["CSV", "JSON", "Excel"])
+        
+        if export_format == "CSV":
+            export_to_csv(st.session_state['query_results'], st.session_state['columns'])
+        elif export_format == "JSON":
+            export_to_json(st.session_state['query_results'], st.session_state['columns'])
+        elif export_format == "Excel":
+            export_to_excel(st.session_state['query_results'], st.session_state['columns'])
 
-        # CSV export functionality remains directly accessible and unchanged
-        export_to_csv(st.session_state['query_results'], st.session_state['columns'])
 
