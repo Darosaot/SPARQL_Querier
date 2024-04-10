@@ -69,7 +69,7 @@ PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX dc: <http://purl.org/dc/elements/1.1/>
 PREFIX euvoc: <http://publications.europa.eu/ontology/euvoc#>
 
-SELECT ?monthName (SUM(?procValue) AS ?totalProcurementValue) (COUNT(DISTINCT ?notice) AS ?numberOfNotices)
+SELECT ?monthName (ROUND(SUM(?procValue) * 100) / 100 AS ?totalProcurementValueRounded) (COUNT(DISTINCT ?notice) AS ?numberOfNotices)
 WHERE {
     ?notice a epo:CompetitionNotice .
     ?notice epo:refersToProcedure ?procedure .
