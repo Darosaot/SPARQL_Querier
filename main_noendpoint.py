@@ -3,7 +3,8 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 import pandas as pd
 # Use the following imports for data visualization and export
 from data_visualization import visualize_data, export_to_csv
-
+from query_executor import execute_query  # Import the execute_query function
+from query_templates import query_templates
 
 # Default credentials
 DEFAULT_USER = "ppds"
@@ -23,67 +24,6 @@ if 'columns' not in st.session_state:
 
 # SPARQL endpoint
 sparql_endpoint = "http://ppds-test-lb-1379769313.eu-central-1.elb.amazonaws.com:8890/sparql"
-
-
-# Predefined query templates
-query_templates = {
-    "Select a template": "",
-    "Count the number of notices": """
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX epo: <http://data.europa.eu/a4g/ontology#>
-PREFIX cccev: <http://data.europa.eu/m8g/>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX locn: <http://www.w3.org/ns/locn#>
-PREFIX cdm: <http://publications.europa.eu/ontology/cdm#>
-PREFIX dct: <http://purl.org/dc/terms/>
-PREFIX dc: <http://purl.org/dc/elements/1.1/>
-PREFIX euvoc: <http://publications.europa.eu/ontology/euvoc#>
-
-SELECT (COUNT(DISTINCT ?notice) AS ?numberOfNotices)
-WHERE {
-    ?notice a epo:Notice .
-}
-""",
-    "Count the number of notices per month":"""
-PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX epo: <http://data.europa.eu/a4g/ontology#>
-PREFIX cccev: <http://data.europa.eu/m8g/>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX locn: <http://www.w3.org/ns/locn#>
-PREFIX cdm: <http://publications.europa.eu/ontology/cdm#>
-PREFIX dct: <http://purl.org/dc/terms/>
-PREFIX dc: <http://purl.org/dc/elements/1.1/>
-PREFIX euvoc: <http://publications.europa.eu/ontology/euvoc#>
-
-SELECT ?monthName (COUNT(DISTINCT ?notice) AS ?numberOfNotices)
-WHERE {
-    ?notice a epo:Notice .
-
-
-# YEAR AND MONTH
-    OPTIONAL {
-        ?notice epo:hasDispatchDate ?date .
-    }
-    BIND(IF(BOUND(?date),year(xsd:date(?date)),"") AS ?year)
-    FILTER(?year=2022)
-    BIND(IF(BOUND(?date),month(xsd:date(?date)),"") AS ?month)
-    BIND(IF(!BOUND(?month), "",
-        IF(?month = 1, "January",
-        IF(?month = 2, "February",
-        IF(?month = 3, "March",
-        IF(?month = 4, "April",
-        IF(?month = 5, "May",
-        IF(?month = 6, "June",
-        IF(?month = 7, "July",
-        IF(?month = 8, "August",
-        IF(?month = 9, "September",
-        IF(?month = 10, "October",
-        IF(?month = 11, "November", "December")))))))))))) AS ?monthName)
-} group by ?monthName
-"""
-}
 
 def is_valid_sparql(query):
     required_keywords = ['SELECT', 'WHERE', '{', '}']  # Basic elements of a query
@@ -110,7 +50,6 @@ viz_options = ["Table", "Line Chart", "Bar Chart", "Pie Chart"]
 if st.session_state['logged_in']:
     st.title('SPARQL Editor & Querier')
     
-
     # Input for manually setting the SPARQL endpoint
     st.session_state['sparql_endpoint'] = st.text_input("SPARQL Endpoint", value=st.session_state.get('sparql_endpoint', ''))
     
@@ -125,29 +64,20 @@ if st.session_state['logged_in']:
         if not is_valid_sparql(query_text):
             st.error("The SPARQL query seems to be invalid. Please check the syntax.")
         else:
-            try:
-                sparql = SPARQLWrapper(st.session_state['sparql_endpoint'])
-                sparql.setQuery(query_text)
-                sparql.setReturnFormat(JSON)
-                results = sparql.query().convert()
-
-                if 'results' in results and 'bindings' in results['results']:
-                    rows = results['results']['bindings']
-                    if rows:
-                        columns = list(results['head']['vars'])
-                        data = [[row[col]['value'] if col in row else "" for col in columns] for row in rows]
-
-                        # Store results in session state
-                        st.session_state['query_results'] = data
-                        st.session_state['columns'] = columns
-                        st.success(f"Query executed successfully, retrieved {len(rows)} results.")
-                    else:
-                        st.write("No results found.")
+            result = execute_query(st.session_state['sparql_endpoint'], query_text)  # Now we get a dictionary back
+            
+            if result['success']:
+                if result['data']:
+                    # Store results in session state
+                    st.session_state['query_results'] = result['data']
+                    st.session_state['columns'] = result['columns']
+                    # Informing the user about successful execution and execution time
+                    st.success(f"Query executed successfully, retrieved {len(result['data'])} results in {result['execution_time']:.2f} seconds.")
                 else:
                     st.write("No results found.")
-            except Exception as e:
-                st.error(f"An error occurred during query execution: {str(e)}")
-
+            else:
+                # Handle errors more gracefully
+                st.error(f"An error occurred during query execution: {result['error']}")
     # Visualization selection and rendering if query results exist
     if 'query_results' in st.session_state and st.session_state['query_results'] is not None:
         selected_viz = st.selectbox("Select visualization type:", ["Table", "Line Chart", "Bar Chart", "Pie Chart"])
