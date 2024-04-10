@@ -145,9 +145,9 @@ if st.session_state['logged_in']:
 
     # Visualization selection and rendering if query results exist
     if 'query_results' in st.session_state and st.session_state['query_results'] is not None:
-        selected_viz = st.selectbox("Select visualization type:", viz_options)
-        
-        # Replace direct DataFrame creation and Plotly visualization with a call to visualize_data
+        selected_viz = st.selectbox("Select visualization type:", ["Table", "Line Chart", "Bar Chart", "Pie Chart"])
+    
+        # Call visualize_data with just the data, columns, and selected visualization type
         visualize_data(st.session_state['query_results'], st.session_state['columns'], selected_viz)
 
         # Replace the CSV export functionality with a call to export_to_csv from data_visualization.py

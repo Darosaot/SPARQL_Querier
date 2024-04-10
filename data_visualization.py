@@ -4,19 +4,31 @@ import streamlit as st
 
 def visualize_data(data, columns, viz_type):
     df = pd.DataFrame(data, columns=columns)
+    
+    # Dynamically generate axis selection based on visualization type
+    if viz_type in ["Line Chart", "Bar Chart", "Pie Chart"]:
+        x_axis = st.selectbox("Choose the X-axis variable:", columns, key="x_axis")
+        if viz_type != "Pie Chart":
+            y_axis = st.selectbox("Choose the Y-axis variable:", columns, index=1 if len(columns) > 1 else 0, key="y_axis")
+        else:
+            y_axis = None
+    else:
+        x_axis, y_axis = None, None
+    
+    # Generate the appropriate plot based on the visualization type and selected axes
     if viz_type == "Table":
         st.table(df)
-    elif viz_type == "Line Chart":
-        fig = px.line(df, x=df.columns[0], y=df.columns[1:])
+    elif viz_type == "Line Chart" and x_axis and y_axis:
+        fig = px.line(df, x=x_axis, y=y_axis)
         st.plotly_chart(fig)
-    elif viz_type == "Bar Chart":
-        fig = px.bar(df, x=df.columns[0], y=df.columns[1:])
+    elif viz_type == "Bar Chart" and x_axis and y_axis:
+        fig = px.bar(df, x=x_axis, y=y_axis)
         st.plotly_chart(fig)
-    elif viz_type == "Pie Chart":
-        fig = px.pie(df, names=df.columns[0], values=df.columns[1])
+    elif viz_type == "Pie Chart" and x_axis:
+        fig = px.pie(df, names=x_axis, values=df.columns[1])  # Assuming the second column as default for values
         st.plotly_chart(fig)
-    else:
-        st.warning("Selected visualization type is not supported for the current data.")
+    elif not viz_type == "Table":
+        st.warning("Please select variables for the axes.")
 
 def export_to_csv(data, columns):
     if data and columns:
