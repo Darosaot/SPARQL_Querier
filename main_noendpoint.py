@@ -85,6 +85,10 @@ WHERE {
 """
 }
 
+def is_valid_sparql(query):
+    required_keywords = ['SELECT', 'WHERE', '{', '}']  # Basic elements of a query
+    return all(keyword in query for keyword in required_keywords)
+
 # User login form
 # with st.sidebar:
 #     st.title("Login")
@@ -105,47 +109,56 @@ viz_options = ["Table", "Line Chart", "Bar Chart", "Pie Chart"]
 # Show main application if logged in
 if st.session_state['logged_in']:
     st.title('SPARQL Editor & Querier')
+    
 
     # Input for manually setting the SPARQL endpoint
     st.session_state['sparql_endpoint'] = st.text_input("SPARQL Endpoint", value=st.session_state.get('sparql_endpoint', ''))
     
     # Dropdown for selecting query templates
     template_selection = st.selectbox("Query Templates:", list(query_templates.keys()))
-
+    
     # Text area for inputting or modifying the SPARQL query
-    query_text = st.text_area("SPARQL Query:", height=300, value=query_templates.get(template_selection, ""))
+    query_text = st.text_area("SPARQL Query:", height=300, value=query_templates.get(template_selection, ""), help="Enter your SPARQL query here. Make sure to include PREFIX declarations if necessary.")
 
     # Execute query button
     if st.button('Execute Query') and st.session_state['sparql_endpoint']:
-        try:
-            sparql = SPARQLWrapper(st.session_state['sparql_endpoint'])
-            sparql.setQuery(query_text)
-            sparql.setReturnFormat(JSON)
-            results = sparql.query().convert()
+        if not is_valid_sparql(query_text):
+            st.error("The SPARQL query seems to be invalid. Please check the syntax.")
+        else:
+            try:
+                sparql = SPARQLWrapper(st.session_state['sparql_endpoint'])
+                sparql.setQuery(query_text)
+                sparql.setReturnFormat(JSON)
+                results = sparql.query().convert()
 
-            if 'results' in results and 'bindings' in results['results']:
-                rows = results['results']['bindings']
-                if rows:
-                    columns = list(results['head']['vars'])
-                    data = [[row[col]['value'] if col in row else "" for col in columns] for row in rows]
+                if 'results' in results and 'bindings' in results['results']:
+                    rows = results['results']['bindings']
+                    if rows:
+                        columns = list(results['head']['vars'])
+                        data = [[row[col]['value'] if col in row else "" for col in columns] for row in rows]
 
-                    # Store results in session state
-                    st.session_state['query_results'] = data
-                    st.session_state['columns'] = columns
+                        # Store results in session state
+                        st.session_state['query_results'] = data
+                        st.session_state['columns'] = columns
+                        st.success(f"Query executed successfully, retrieved {len(rows)} results.")
+                    else:
+                        st.write("No results found.")
                 else:
                     st.write("No results found.")
-            else:
-                st.write("No results found.")
-        except Exception as e:
-            st.error(f"An error occurred during query execution: {str(e)}")
+            except Exception as e:
+                st.error(f"An error occurred during query execution: {str(e)}")
 
     # Visualization selection and rendering if query results exist
     if 'query_results' in st.session_state and st.session_state['query_results'] is not None:
         selected_viz = st.selectbox("Select visualization type:", ["Table", "Line Chart", "Bar Chart", "Pie Chart"])
-    
-        # Call visualize_data with just the data, columns, and selected visualization type
+        
+        # Assuming visualize_data now internally handles everything including:
+        # - Dynamic UI elements for axis selection
+        # - Any data filtering UI
+        # - Chart customization options
+        # Therefore, you just call it with the data, columns, and selected viz type.
         visualize_data(st.session_state['query_results'], st.session_state['columns'], selected_viz)
 
-        # Replace the CSV export functionality with a call to export_to_csv from data_visualization.py
+        # CSV export functionality remains directly accessible and unchanged
         export_to_csv(st.session_state['query_results'], st.session_state['columns'])
 
