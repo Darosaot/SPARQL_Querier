@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 import xlsxwriter
+from io import BytesIO
 
 def export_to_csv(data, columns):
     df = pd.DataFrame(data, columns=columns)
@@ -14,12 +15,14 @@ def export_to_json(data, columns):
 
 def export_to_excel(data, columns):
     df = pd.DataFrame(data, columns=columns)
-    towrite = pd.ExcelWriter("query_results.xlsx", engine='xlsxwriter')
-    df.to_excel(towrite, index=False)
-    towrite.save()
-    towrite.close()
-    with open("query_results.xlsx", "rb") as file:
-        st.download_button(label="Download as Excel", data=file, file_name="query_results.xlsx", mime='application/vnd.ms-excel')
+    # Use BytesIO as an in-memory buffer
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False)
+        writer.save()  # Save the data to the buffer
+    output.seek(0)  # Rewind the buffer
+    # Use the buffer's contents for the download button
+    st.download_button(label="Download as Excel", data=output, file_name="query_results.xlsx", mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 # For XML and RDF, you will need specific libraries and formatting. 
 # These examples are more complex and depend on your data's structure.

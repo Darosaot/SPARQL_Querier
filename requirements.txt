@@ -3,3 +3,4 @@ pandas
 plotly
 SPARQLWrapper
 xlsxwriter
+openpyxl
