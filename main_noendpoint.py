@@ -51,8 +51,10 @@ viz_options = ["Table", "Line Chart", "Bar Chart", "Pie Chart"]
 
 # Show main application if logged in
 if st.session_state['logged_in']:
-    st.title('SPARQL Editor & Querier')
+    st.title('SPARQL Analytics')
     
+    
+    st.subheader("SPARQL Editor & Querier")
     # Input for manually setting the SPARQL endpoint
     st.session_state['sparql_endpoint'] = st.text_input("SPARQL Endpoint", value=st.session_state.get('sparql_endpoint', ''))
     
