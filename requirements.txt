@@ -4,3 +4,5 @@ plotly
 SPARQLWrapper
 xlsxwriter
 openpyxl
+statsmodels
+numpy

@@ -7,6 +7,7 @@ from query_executor import execute_query  # Import the execute_query function
 from query_templates import query_templates
 from results_export import export_to_csv, export_to_json, export_to_excel
 import xlsxwriter
+from regression_analysis import perform_regression
 
 # Default credentials
 DEFAULT_USER = "ppds"
@@ -80,17 +81,40 @@ if st.session_state['logged_in']:
             else:
                 # Handle errors more gracefully
                 st.error(f"An error occurred during query execution: {result['error']}")
-    # Visualization selection and rendering if query results exist
+    
+        # Visualization selection and rendering if query results exist
     if 'query_results' in st.session_state and st.session_state['query_results'] is not None:
+        st.subheader("Data Visualization")
+        st.write("Choose a visualization type to display the results of your SPARQL query.")
         selected_viz = st.selectbox("Select visualization type:", ["Table", "Line Chart", "Bar Chart", "Pie Chart"])
         
-        # Assuming visualize_data now internally handles everything including:
-        # - Dynamic UI elements for axis selection
-        # - Any data filtering UI
-        # - Chart customization options
-        # Therefore, you just call it with the data, columns, and selected viz type.
+        # Call to the visualization function
         visualize_data(st.session_state['query_results'], st.session_state['columns'], selected_viz)
-        # Export options
+
+        # Regression Analysis Section
+        st.subheader("Regression Analysis")
+        st.write("Select variables to perform a simple linear regression analysis on the query results.")
+        
+        # Interface for selecting dependent and independent variables
+        dep_var = st.selectbox("Select the dependent variable:", st.session_state['columns'])
+        indep_var = st.selectbox("Select the independent variable:", [col for col in st.session_state['columns'] if col != dep_var])
+        
+        # Button to perform regression
+        if st.button("Perform Regression"):
+            # Convert query results to DataFrame
+            df = pd.DataFrame(st.session_state['query_results'], columns=st.session_state['columns'])
+            
+            # Perform regression
+            try:
+                result = perform_regression(df, dep_var, indep_var)
+                st.text(str(result))
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+
+        # Export Options
+        st.subheader("Export Query Results")
+        st.write("Export the results of your SPARQL query to CSV, JSON, or Excel formats for offline analysis.")
+        
         export_format = st.selectbox("Select export format:", ["CSV", "JSON", "Excel"])
         
         if export_format == "CSV":
@@ -99,5 +123,4 @@ if st.session_state['logged_in']:
             export_to_json(st.session_state['query_results'], st.session_state['columns'])
         elif export_format == "Excel":
             export_to_excel(st.session_state['query_results'], st.session_state['columns'])
-
 
