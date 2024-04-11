@@ -95,21 +95,31 @@ if st.session_state['logged_in']:
 
         # Regression Analysis Section
         st.subheader("Regression Analysis")
-        st.write("Select variables to perform a simple linear regression analysis on the query results.")
-        
+        st.write("Select variables and the type of regression to perform analysis on the query results.")
+
+        # Dropdown to select regression type
+        regression_type = st.selectbox("Choose the type of regression:", ["Linear", "Logistic"])
+
+        # Conditional dropdown for logistic regression family selection
+        if regression_type == "Logistic":
+            family = st.selectbox("Choose the logistic regression family:", ["Binomial", "Poisson", "Negative Binomial"])
+        else:
+            family = "None"  # Default to 'None' if not logistic regression
+
         # Interface for selecting dependent and independent variables
         dep_var = st.selectbox("Select the dependent variable:", st.session_state['columns'])
-        indep_var = st.selectbox("Select the independent variable:", [col for col in st.session_state['columns'] if col != dep_var])
-        
+        indep_vars = st.multiselect("Select the independent variables:", [col for col in st.session_state['columns'] if col != dep_var])
+
         # Button to perform regression
         if st.button("Perform Regression"):
-            # Convert query results to DataFrame
             df = pd.DataFrame(st.session_state['query_results'], columns=st.session_state['columns'])
-            
-            # Perform regression
             try:
-                result = perform_regression(df, dep_var, indep_var)
-                st.text(str(result))
+                result, error = perform_regression(df, dep_var, indep_vars, regression_type.lower(), family)
+                if error:
+                    st.error(error)
+                else:
+                    # Display the regression results using Markdown to improve readability
+                    st.markdown("```\n" + result + "\n```", unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"An error occurred: {e}")
 
