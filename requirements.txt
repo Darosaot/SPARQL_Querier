@@ -6,3 +6,6 @@ xlsxwriter
 openpyxl
 statsmodels
 numpy
+streamlit-extras
+matplotlib
+io
