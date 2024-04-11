@@ -6,12 +6,12 @@ from data_visualization import visualize_data
 from query_executor import execute_query  # Import the execute_query function
 from query_templates import query_templates
 from results_export import export_to_csv, export_to_json, export_to_excel
-import xlsxwriter
 from regression_analysis import perform_regression
+from texts import intro_text
 
 # Default credentials
-DEFAULT_USER = "ppds"
-DEFAULT_PASS = "ppds"
+DEFAULT_USER = "user"
+DEFAULT_PASS = "user"
 
 # Function to check login credentials
 def check_login(username, password):
@@ -25,8 +25,6 @@ if 'query_results' not in st.session_state:
 if 'columns' not in st.session_state:
     st.session_state['columns'] = None
 
-# SPARQL endpoint
-sparql_endpoint = "http://ppds-test-lb-1379769313.eu-central-1.elb.amazonaws.com:8890/sparql"
 
 def is_valid_sparql(query):
     required_keywords = ['SELECT', 'WHERE', '{', '}']  # Basic elements of a query
@@ -52,6 +50,7 @@ viz_options = ["Table", "Line Chart", "Bar Chart", "Pie Chart"]
 # Show main application if logged in
 if st.session_state['logged_in']:
     st.title('SPARQL Analytics')
+    st.markdown(intro_text)
     
     
     st.subheader("SPARQL Editor & Querier")
