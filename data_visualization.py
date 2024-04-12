@@ -1,6 +1,7 @@
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from streamlit_extras.dataframe_explorer import dataframe_explorer
 
 def professional_styled_table(df, page_size=100):
     """
@@ -44,7 +45,8 @@ def visualize_data(data, columns, viz_type):
     
     # Generate the appropriate plot based on the visualization type and selected axes
     if viz_type == "Table":
-        professional_styled_table(df, page_size=100)
+        filtered_df = dataframe_explorer(df, case=False)
+        st.dataframe(filtered_df, use_container_width=True)
     elif viz_type in ["Line Chart", "Bar Chart"]:
         x_axis = st.selectbox("Choose the X-axis variable:", columns, key="x_axis_" + viz_type)
         y_axis = st.selectbox("Choose the Y-axis variable:", columns, index=1 if len(columns) > 1 else 0, key="y_axis_" + viz_type)
